@@ -342,14 +342,25 @@ fetch('https://customer-rest-service-frontend-personaltrainer.2.rahtiapp.fi/api/
       <Dialog open={Edit} onClose={handleEditClose}>
         <DialogTitle>Edit Training</DialogTitle>
         <DialogContent>
-          <TextField
-            margin="dense"
-            name="date"
-            label="Date"
-            fullWidth
-            value={editTraining.date || ''}
-            onChange={handleEditChange}
-          />
+          <Box sx={{ mt: 1 }}>
+            <DateTimePicker
+              label="Date & Time"
+              format="DD.MM.YYYY HH:mm"
+              value={editTraining.date ? dayjs(editTraining.date) : null}
+              onChange={(newValue: Dayjs | null) => {
+                setEditTraining({
+                  ...editTraining,
+                  date: newValue ? newValue.toISOString() : ''
+                });
+              }}
+              slotProps={{
+                textField: {
+                  fullWidth: true,
+                  margin: 'dense'
+                }
+              }}
+            />
+          </Box>
           <TextField
             margin="dense"
             name="duration"

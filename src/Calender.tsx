@@ -24,7 +24,7 @@ const calendarViews = [
   Views.AGENDA,
 ];
 
-
+{/* layout to view calendar */}
 function CalendarToolbar(props: any) {
   const { date, view, onNavigate, onView, label } = props;
 
@@ -114,6 +114,8 @@ function CalendarView() {
   const [date, setDate] = useState(new Date());
   const [view, setView] = useState<View>(Views.WEEK);
 
+
+{/* on color follow where i press */}
   const [anchorEl, setAnchorEl] =
     useState<null | HTMLElement>(null);
 
@@ -123,6 +125,7 @@ function CalendarView() {
   useEffect(() => {
     let cancelled = false;
 
+    {/*get training data */}
     const fetchTrainings = async () => {
       try {
         setLoading(true);
@@ -249,7 +252,7 @@ function CalendarView() {
         </Toolbar>
       </AppBar>
 
-      {/* Calendar content */}
+   
       <Box
         sx={{
           flex: 1,
