@@ -148,20 +148,20 @@ const updateCustomer = () => {
 }, []);
 
    const columns: GridColDef[] = [
-        {field:'firstname', headerName: 'FirstName', width: 200},
-        {field:'lastname', headerName: 'LastName', width: 150},
-        {field:'streetaddress', headerName: 'StreetAddress', width: 200},
+        {field:'firstname', headerName: 'First Name', width: 200},
+        {field:'lastname', headerName: 'Last Name', width: 150},
+        {field:'streetaddress', headerName: 'Street Address', width: 200},
         {field:'postcode', headerName: 'PostCode', width: 200},
         {field:'city', headerName: 'City', width: 200},
         {field:'email', headerName: 'Email', width: 200},
         {field:'phone', headerName: 'Phone', width: 200},
         {
-  field: 'actions',
-  headerName: 'Actions',
-  width: 180,
-  sortable: false,
-  filterable: false,
-  renderCell: (params: GridRenderCellParams) => (
+         field: 'actions',
+        headerName: 'Actions',
+        width: 180,
+        sortable: false,
+        filterable: false,
+        renderCell: (params: GridRenderCellParams) => (
     <Box sx={{ display: 'flex', gap: 1 }}>
       <Button 
         size="small" 
@@ -186,15 +186,23 @@ const updateCustomer = () => {
 
     ]
 
-    const handleDelete = (id: string) => {
-
-        if (window.confirm("Are you  sure to delete?")) {
-            
-            setRecords(records.filter((record) => record.id !== id));
+    const handleDelete = (id: number) => {
+  if (window.confirm("Are you sure to delete this customer?")) {
+    fetch(`https://customer-rest-service-frontend-personaltrainer.2.rahtiapp.fi/api/customers/${id}`, {
+      method: 'DELETE'
+    })
+      .then(res => {
+        if (res.ok) {
+         
+          setRecords(prev => prev.filter(r => r.id !== id));
+          setFilteredRecords(prev => prev.filter(r => r.id !== id));
+        } else {
+          alert('Delete failed');
         }
-
-        
-    }
+      })
+      .catch(err => console.error(err));
+  }
+};
 
     const handleSearch = () => {
   const keyword = searchText.trim().toLowerCase();
@@ -210,6 +218,33 @@ const updateCustomer = () => {
   );
 
   setFilteredRecords(result);
+};
+
+const exportToCSV = () => {
+  const headers = ['First Name', 'Last Name', 'Street Address', 'Postcode', 'City', 'Email', 'Phone'];
+  const rows = filteredRecords.map(c => [
+    c.firstname,
+    c.lastname,
+    c.streetaddress,
+    c.postcode,
+    c.city,
+    c.email,
+    c.phone
+  ]);
+
+  const csvContent = [
+    headers.join(','),
+    ...rows.map(row => row.map(cell => `"${cell || ''}"`).join(','))
+  ].join('\n');
+
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.setAttribute('download', 'customers.csv');
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
 };
 
 
@@ -241,10 +276,13 @@ const updateCustomer = () => {
             <MenuItem onClick={() => { navigate('/trainings'); handleClose(); }}>
               Trainings
             </MenuItem>
+            <MenuItem onClick={() => { navigate('/Calender'); handleClose(); }}>
+              Calender
+            </MenuItem>
           </Menu>
 
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            Training Information
+            Customer Information
           </Typography>
         </Toolbar>
       </AppBar>
@@ -253,7 +291,7 @@ const updateCustomer = () => {
 
 </Box>
 
-{/* Dialog */}
+
 <Dialog open={openAdd} onClose={handleAddClose}>
   <DialogTitle>Add New Customer</DialogTitle>
   <DialogContent>
@@ -271,7 +309,7 @@ const updateCustomer = () => {
   </DialogActions>
 </Dialog>
 
-{/* Edit Dialog */}
+
 <Dialog open={Edit} onClose={handleEditClose}>
   <DialogTitle>Edit Customer</DialogTitle>
   <DialogContent>
@@ -319,6 +357,13 @@ const updateCustomer = () => {
        <Button variant="contained" onClick={handleAddOpen}>
        Add Customer
       </Button>
+      <Button 
+  variant="outlined" 
+  color="success"
+  onClick={exportToCSV}
+>
+  Export CSV
+</Button>
 
     
     </Box>

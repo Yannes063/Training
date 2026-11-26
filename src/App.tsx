@@ -2,6 +2,7 @@
 import ShowCustomer from './ShowCustomer'
 import ShowTraining from './ShowTraining'
 import {useState} from 'react';
+import Calender from './Calender';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import CssBaseline from "@mui/material/CssBaseline";
 
@@ -31,6 +32,7 @@ const [customerInfos, setCustomerInfos] = useState<cusinfo[]>([]);
       <Routes>
         <Route path="/" element={<ShowCustomer />} />
         <Route path="/trainings" element={<ShowTraining />} />
+        <Route path="/Calender" element={<Calender />}/>
       </Routes>
     </BrowserRouter>
     

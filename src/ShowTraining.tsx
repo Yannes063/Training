@@ -32,18 +32,20 @@ function ShowTraining() {
 
     const [loading, setLoading] = useState(false)
     const [records, setRecords] = useState<any[]>([]);
+    const [customers, setCustomers] = useState<any[]>([]);
 
     const [newRecord, setNewRecord] = useState ({
       date: '',
       duration: '',
-      activity: ''
+      activity: '',
+      customer: ''
     })
     const [openAdd, setOpenAdd] = useState(false);
 
     const handleAddOpen = () => setOpenAdd(true);
     const handleAddClose = () => {
         setOpenAdd(false);
-        setNewRecord({ date: '', duration: '', activity: '' });
+        setNewRecord({ date: '', duration: '', activity: '', customer: '' });
         };
 
     const [Edit, setEdit] = useState(false);
@@ -67,19 +69,30 @@ function ShowTraining() {
 };
 
 const saveTraining = () => {
+  if (!newRecord.customer) {
+    alert('Please select a customer');
+    return;
+  }
+
   fetch('https://customer-rest-service-frontend-personaltrainer.2.rahtiapp.fi/api/trainings', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(newRecord)
+    body: JSON.stringify({
+      date: newRecord.date,
+      duration: newRecord.duration,
+      activity: newRecord.activity,
+      customer: newRecord.customer   
+    })
   })
     .then(res => {
       if (res.ok) {
-  
-        window.location.reload(); 
+        window.location.reload();   
+      } else {
+        alert('Failed to add training');
       }
     })
     .catch(err => console.error(err));
-  
+
   handleAddClose();
 };
 
@@ -119,27 +132,41 @@ const updateTraining = () => {
 
    useEffect(() => {
   setLoading(true);
-  fetch('https://customer-rest-service-frontend-personaltrainer.2.rahtiapp.fi/api/trainings')
-    .then(response => {
-      if (!response.ok) {
-        throw new Error("Error in fetch: " + response.statusText);
-      }
-      return response.json();
-    })
-    .then(responseData => {
-      
-      const training = responseData._embedded.trainings.map((training: any) => {
-       
-        const href = training._links.self.href;
-        const id = Number(href.substring(href.lastIndexOf('/') + 1));
-        return {
-          ...training,
-          id: id,   
-      }});
-      setRecords(training);
-    })
+  fetch('https://customer-rest-service-frontend-personaltrainer.2.rahtiapp.fi/api/gettrainings')
+  .then(response => {
+    if (!response.ok) {
+      throw new Error("Error in fetch: " + response.statusText);
+    }
+    return response.json();
+  })
+  .then(data => {
+  
+    const training = data.map((t: any) => ({
+      ...t,
+      customerName: t.customer 
+        ? `${t.customer.firstname} ${t.customer.lastname}` 
+        : 'No customer'
+    }));
+    setRecords(training);
+  })
     .catch(err => console.error(err))
     .finally(() => setLoading(false));
+  // 获取客户列表（用于下拉选择）
+fetch('https://customer-rest-service-frontend-personaltrainer.2.rahtiapp.fi/api/customers')
+  .then(res => res.json())
+  .then(data => {
+    const list = data._embedded.customers.map((c: any) => {
+      const href = c._links.self.href;
+      const id = Number(href.substring(href.lastIndexOf('/') + 1));
+      return {
+        ...c,
+        id,
+        fullName: `${c.firstname} ${c.lastname}`,
+        selfHref: href
+      };
+    });
+    setCustomers(list);
+  });
 }, []);
 
    const columns: GridColDef[] = [
@@ -154,6 +181,7 @@ const updateTraining = () => {
         }},
         {field:'duration', headerName: 'Duration', width: 150},
         {field:'activity', headerName: 'Activity', width: 200},
+        {field: 'customerName', headerName: 'Customer', width: 180 },
          {
         field: 'actions',
         headerName: 'Actions',
@@ -184,15 +212,21 @@ const updateTraining = () => {
 
     ]
 
-    const handleDelete = (id: string) => {
-
-        if (window.confirm("Are you  sure to delete?")) {
-            
-            setRecords(records.filter((record) => record.id !== id));
+   const handleDelete = (id: number) => {
+  if (window.confirm("Are you sure to delete this training?")) {
+    fetch(`https://customer-rest-service-frontend-personaltrainer.2.rahtiapp.fi/api/trainings/${id}`, {
+      method: 'DELETE'
+    })
+      .then(res => {
+        if (res.ok) {
+          setRecords(prev => prev.filter(r => r.id !== id));
+        } else {
+          alert('Delete failed');
         }
-
-        
-    }
+      })
+      .catch(err => console.error(err));
+  }
+};
 
    
 
@@ -225,6 +259,9 @@ const updateTraining = () => {
             </MenuItem>
             <MenuItem onClick={() => { navigate('/trainings'); handleClose(); }}>
               Trainings
+            </MenuItem>
+             <MenuItem onClick={() => { navigate('/Calender'); handleClose(); }}>
+              Calender
             </MenuItem>
           </Menu>
 
@@ -279,6 +316,21 @@ const updateTraining = () => {
             value={newRecord.activity}
             onChange={handleAddChange}
           />
+          <TextField
+            select
+            margin="dense"
+            name="customer"
+            label="Customer"
+            fullWidth
+            value={newRecord.customer}
+            onChange={handleAddChange}
+>
+            {customers.map((c) => (
+           <MenuItem key={c.id} value={c.selfHref}>
+             {c.fullName}
+          </MenuItem>
+             ))}
+          </TextField>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleAddClose}>Cancel</Button>
